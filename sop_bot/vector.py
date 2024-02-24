@@ -3,12 +3,16 @@ from langchain.vectorstores import DocArrayInMemorySearch
 from langchain_pinecone import Pinecone as PineconeStore
 from langchain.vectorstores import Chroma
 import utils
+import os
+
+SCRIPT_PATH: str = os.path.dirname(os.path.abspath(__file__))
 
 
 class VectorDB:
     def __init__(self, name, index_name='sop-chat'):
         self.name = name
         self.index_name = index_name
+        self.retriever = None  
 
     def insert_vector(self, vector):
         raise NotImplementedError("Subclasses must implement insert_vector method")
@@ -24,7 +28,8 @@ class VectorDB:
 class ChromaDB(VectorDB):
     def __init__(self, name, index_name='sop-chat'):
         self.name = name
-        self.index_name = index_name        
+        self.index_name = index_name
+        self.retriever = None        
 
     def insert_vector(self, vector):
         # Implementation specific to Chromed
@@ -37,7 +42,11 @@ class ChromaDB(VectorDB):
     def from_documents(self, splits, embeddings):
         chroma_db = Chroma.from_documents(documents=splits, embedding = embeddings, persist_directory='chroma_db')
         chroma_db.persist()
-        return chroma_db
+        self.retriever = chroma_db.as_retriever(
+            search_type='mmr',
+            search_kwargs={'k':2, 'fetch_k':4}
+        )
+        return chroma_db     
         
 
 
@@ -47,6 +56,7 @@ class Pinecone(VectorDB):
         self.name = name
         self.index_name = index_name
         self.pinecone_store = utils.configure_pinecone()
+        self.retriever = None  
 
     def insert_vector(self, vector):
         # Implementation specific to Pinecone
@@ -60,13 +70,15 @@ class Pinecone(VectorDB):
         docsearch = self.pinecone_store.from_documents(splits, embeddings, index_name=self.index_name)
         retriever = PineconeHybridSearchRetriever(
                     embeddings=embed, sparse_encoder=bm25, index=index, top_k= int(5), alpha= float(0.7))
-        return docsearch
+        return docsearch    
+    
 
 
 class InmemoryDB(VectorDB):
     def __init__(self, name, index_name='sop-chat'):
         self.name = name
         self.index_name = index_name
+        self.retriever = None  
 
     def insert_vector(self, vector):
         # Implementation specific to Pinecone

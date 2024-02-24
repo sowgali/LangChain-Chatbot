@@ -40,14 +40,8 @@ def display_msg(msg, author):
     st.chat_message(author).write(msg)
 
 def configure_openai_api_key():
-    openai_api_key = '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'
+    openai_api_key = 'ENTER YOU OPEN AI KEY HERE'
     os.environ['TOKENIZERS_PARALLELISM'] = 'False'
-    # st.sidebar.text_input(
-    #     label="OpenAI API Key",
-    #     type="password",
-    #     value=st.session_state['OPENAI_API_KEY'] if 'OPENAI_API_KEY' in st.session_state else '',
-    #     placeholder="sk-..."
-    #     )
     if openai_api_key:
         st.session_state['OPENAI_API_KEY'] = openai_api_key
         os.environ['OPENAI_API_KEY'] = openai_api_key
