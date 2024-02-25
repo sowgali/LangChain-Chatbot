@@ -25,10 +25,7 @@ class CustomDataChatbot:
     @utils.enable_chat_history
     def main(self):       
         print('in chat bot main')
-        if self.artifact.qa_chain is None:
-            st.error('please upload files for context')                   
             
-           
         user_query = st.chat_input(placeholder="Ask me anything!")
 
         if user_query:         
@@ -37,8 +34,11 @@ class CustomDataChatbot:
 
             with st.chat_message("assistant"):
                 st_cb = StreamHandler(st.empty())
-                response = self.artifact.qa_chain.run(user_query, callbacks=[st_cb])                            
-                st.session_state.messages.append({"role": "assistant", "content": response})
+                response = self.artifact.qa_chain({"question":user_query}, callbacks=[st_cb])   
+                with st.sidebar:
+                    st.header('Source:')
+                    st.text(response['source_documents'][0].metadata['source'][6:])                    
+                st.session_state.messages.append({"role": "assistant", "content": response['answer']})
                 
 
 if __name__ == "__main__":

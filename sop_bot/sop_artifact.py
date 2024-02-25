@@ -22,7 +22,8 @@ class SopArtifactory:
 
     def __init__(self):
         utils.configure_openai_api_key()        
-        self.openai_model = "gpt-3.5-turbo"       
+        self.openai_model = "gpt-3.5-turbo" 
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")      
         self.vectorDB = ChromaDB('chroma_db')
         self.qa_chain = None
 
@@ -64,17 +65,22 @@ class SopArtifactory:
         
         memory = ConversationBufferMemory(
             memory_key='chat_history',
-            return_messages=True
+            return_messages=True,
+            output_key='answer'
         )
 
         # Setup LLM and QA chain
         llm = ChatOpenAI(model_name=self.openai_model, temperature=0, streaming=True)
-        self.qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory, verbose=True, rephrase_question=False)
+        self.qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory, verbose=True, rephrase_question=False,
+                                        get_chat_history=lambda h : h,
+                                        return_source_documents=True)
         return self.qa_chain 
     
     
     def setup_qa_chain(self, retriever):       
         print('setting up qa_chain')
+        
+        
         # Setup memory for contextual conversation        
         memory = ConversationBufferMemory(
             memory_key='chat_history',
