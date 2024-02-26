@@ -28,7 +28,7 @@ class CustomDataLoader:
     def main(self):
         print('in data loader main')
         # User Inputs
-        uploaded_files = st.sidebar.file_uploader(label='Upload PDF files', type=['pdf'], accept_multiple_files=True)
+        uploaded_files = st.sidebar.file_uploader(label='Upload PDF files', type=['pdf','docx'], accept_multiple_files=True)
 
         
         if uploaded_files:

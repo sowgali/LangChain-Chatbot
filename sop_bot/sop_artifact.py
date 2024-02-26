@@ -5,7 +5,7 @@ from streaming import StreamHandler
 from vector import InmemoryDB, ChromaDB
 
 from langchain.chat_models import ChatOpenAI
-from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain.memory import ConversationBufferMemory
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chains import ConversationalRetrievalChain
@@ -22,8 +22,7 @@ class SopArtifactory:
 
     def __init__(self):
         utils.configure_openai_api_key()        
-        self.openai_model = "gpt-3.5-turbo" 
-        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")      
+        self.openai_model = "gpt-3.5-turbo"       
         self.vectorDB = ChromaDB('chroma_db')
         self.qa_chain = None
 
@@ -42,7 +41,13 @@ class SopArtifactory:
         docs = []
         for file in uploaded_files:
             file_path = self.save_file(file)
-            loader = PyPDFLoader(file_path)
+            print(f"file type is {file.type}")
+            if file.type == "application/pdf":
+                print('in pdf loader')
+                loader = PyPDFLoader(file_path)
+            else:
+                print('in doc loader')
+                loader = Docx2txtLoader(file_path)
             docs.extend(loader.load())
         
         # Split documents
