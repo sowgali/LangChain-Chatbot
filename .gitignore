@@ -1,0 +1,14 @@
+# ignore mac specific files
+*.DS_Store
+
+# egg-info
+*.egg-info
+
+# ignore IDE files
+.vscode/
+.idea
+
+# cache
+.cache/
+__pycache__/
+
