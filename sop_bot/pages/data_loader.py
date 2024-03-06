@@ -3,6 +3,8 @@ import utils
 import streamlit as st
 from streaming import StreamHandler
 from sop_artifact import SopArtifactory
+import logging
+logger = logging.getLogger('sop_bot')
 
 st.set_page_config(page_title="LoadPDF", page_icon="📄")
 st.header('Load your sops')
@@ -12,12 +14,12 @@ st.write('Has access to custom documents and can respond to user queries by refe
 class CustomDataLoader:
 
     def __init__(self):
-        print('in data loader init')
+        logger.debug('in data loader init')
         if "artifact" not in st.session_state:
-            print('no artifact defined in data loader')
+            logger.debug('no artifact defined in data loader')
             st.session_state['artifact'] = SopArtifactory()
         self.artifact = st.session_state['artifact']    
-        print(self.artifact.qa_chain)
+        logger.debug(self.artifact.qa_chain)
     
     @st.spinner('processing request..')
     def upload_files(self, uploaded_files):
@@ -26,7 +28,7 @@ class CustomDataLoader:
 
     
     def main(self):
-        print('in data loader main')
+        logger.debug('in data loader main')
         # User Inputs
         uploaded_files = st.sidebar.file_uploader(label='Upload PDF files', type=['pdf','docx'], accept_multiple_files=True)
 

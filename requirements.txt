@@ -8,3 +8,4 @@ docarray==0.32.1
 langchain_pinecone
 chromadb
 boto3
+Docx2txt
