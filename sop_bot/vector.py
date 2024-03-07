@@ -69,8 +69,7 @@ class ChromaDB(VectorDB):
             search_kwargs={'k':2, 'fetch_k':4}
         )
         return chroma_db    
-      
-        
+    
     def get_retreiver(self,  embeddings):
         self.client = chromadb.PersistentClient()
         chroma_db = Chroma(embedding = embeddings, persist_directory=self.name, client=self.client, collection='sop_chat')
@@ -81,7 +80,7 @@ class ChromaDB(VectorDB):
         )
         return retriever    
     
-    def get_documents(self, persist_directory= None):
+    def get_documents(self, sources, persist_directory= None):
         if persist_directory is None:
             persist_directory = self.name
         logger.debug(f'in get_documents with persisten dir : {persist_directory}')
@@ -96,6 +95,48 @@ class ChromaDB(VectorDB):
         logger.debug(db_records['metadatas'])          
         
         logger.debug(f"length of ids in db {len(db_records['ids'])}")
+        
+    def get_document_ids_by_sources(self, sources= None, persist_directory= None):
+        if persist_directory is None:
+            persist_directory = self.name
+        logger.debug(f'in get_documents with persisten dir : {persist_directory}')
+        if self.db is None:
+            self.db = Chroma(persist_directory=persist_directory)
+        db = self.db
+        ids = []
+        if sources is None:
+            db_records = db.get()
+            ids.append(db_records['ids'])
+        else:
+            for source in sources:
+                source_string =  "./tmp/{0}".format(source)
+                logger.debug(source_string)
+            
+                db_records = db.get(where={"source":source_string})
+                ids.append(db_records['ids'])
+            
+                logger.debug(db_records['metadatas'])          
+            
+                logger.debug(f"length of ids in db {len(db_records['ids'])}")
+        return ids
+        
+    def get_document_names(self, persist_directory= None):
+        if persist_directory is None:
+            persist_directory = self.name
+        logger.debug(f'in get_documents with persisten dir : {persist_directory}')       
+        
+        if self.db is None:
+            self.db = Chroma(persist_directory=persist_directory)
+        db = self.db
+        db_records = db.get()
+        logger.debug(db_records['metadatas'])   
+        names = {}
+        for i, record in enumerate(db_records):
+            names[db_records['metadatas'][i]['source'].replace('./tmp/', '')]= db_records['ids'][i]       
+        
+               
+        logger.debug(f"length of ids in db {len(db_records['ids'])}")
+        return names
         
     
     def is_document_exist(self, document_name, persist_directory=None):    

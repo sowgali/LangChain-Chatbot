@@ -27,7 +27,11 @@ class CustomDataChatbot:
     @utils.enable_chat_history
     def main(self):       
         logger.debug('in chat bot main')
-            
+        names = self.artifact.vectorDB.get_document_names()
+        with st.sidebar.expander(label='List of documents', expanded=True):
+            for name, id in names.items():
+                st.checkbox(label=f'{name}', key=f'{id}')
+        
         user_query = st.chat_input(placeholder="Ask me anything!")
 
         if user_query:         
