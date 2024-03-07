@@ -1,5 +1,6 @@
 import os
 import random
+import hashlib
 import streamlit as st
 from langchain_pinecone import Pinecone as PineconeStore
 
@@ -67,3 +68,11 @@ def configure_pinecone():
 def configure_chroma():    
     return ''
 
+def generate_uid(source):
+    m = hashlib.md5()
+    
+
+    m.update(source.encode('utf-8'))
+    uid = m.hexdigest()[:12]
+    
+    return uid
