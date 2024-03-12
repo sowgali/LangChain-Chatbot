@@ -46,9 +46,10 @@ class ChromaDB(VectorDB):
     def __init__(self, name, index_name='sop-chat'):
         self.name = name
         self.index_name = index_name
-        self.retriever = None    
-        self.client = None
-        self.db = Chroma(persist_directory=name, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
+        self.retriever = None  
+        client = chromadb.PersistentClient(path=name)  
+        self.client = client
+        self.db = Chroma(client = client, persist_directory=name, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
         
 
     def insert_vector(self, vector):
