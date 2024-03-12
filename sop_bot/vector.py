@@ -49,7 +49,7 @@ class ChromaDB(VectorDB):
         self.retriever = None  
         client = chromadb.PersistentClient(path=name)  
         self.client = client
-        self.db = Chroma(client = client, persist_directory=name, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
+        self.db = Chroma(client = client, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
         
 
     def insert_vector(self, vector):
