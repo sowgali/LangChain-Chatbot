@@ -43,7 +43,7 @@ class CustomDataChatbot:
                 response = self.artifact.qa_chain({"question":user_query}, callbacks=[st_cb])   
                 with st.sidebar:
                     st.header('Source:')
-                    st.text(response['source_documents'][0].metadata['source'][6:])                    
+                    st.text(response['source_documents'][0].metadata['source'].split('/')[-1])                    
                 st.session_state.messages.append({"role": "assistant", "content": response['answer']})
                 
 
