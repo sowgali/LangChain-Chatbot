@@ -44,7 +44,10 @@ class CustomDataChatbot:
                     response = self.artifact.qa_chain({"question":user_query}, callbacks=[st_cb])   
                     with st.sidebar:
                         st.header('Source:')
-                        st.text(response['source_documents'][0].metadata['source'].split('/')[-1])                    
+                        if response['source_documents'] and response['source_documents'][0].metadata['source']:
+                            st.text(response['source_documents'][0].metadata['source'].split('/')[-1]) 
+                        else:  
+                            st.text('')                 
                     st.session_state.messages.append({"role": "assistant", "content": response['answer']})
                 
 
