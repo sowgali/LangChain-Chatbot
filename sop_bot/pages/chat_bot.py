@@ -39,12 +39,13 @@ class CustomDataChatbot:
             utils.display_msg(user_query, 'user')
 
             with st.chat_message("assistant"):
-                st_cb = StreamHandler(st.empty())
-                response = self.artifact.qa_chain({"question":user_query}, callbacks=[st_cb])   
-                with st.sidebar:
-                    st.header('Source:')
-                    st.text(response['source_documents'][0].metadata['source'].split('/')[-1])                    
-                st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+                with st.spinner("Fetching results"):
+                    st_cb = StreamHandler(st.empty())
+                    response = self.artifact.qa_chain({"question":user_query}, callbacks=[st_cb])   
+                    with st.sidebar:
+                        st.header('Source:')
+                        st.text(response['source_documents'][0].metadata['source'].split('/')[-1])                    
+                    st.session_state.messages.append({"role": "assistant", "content": response['answer']})
                 
 
 if __name__ == "__main__":

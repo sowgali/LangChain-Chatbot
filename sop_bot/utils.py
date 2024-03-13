@@ -41,7 +41,7 @@ def display_msg(msg, author):
     st.chat_message(author).write(msg)
 
 def configure_openai_api_key():
-    openai_api_key = 'ENTER YOU OPEN AI KEY HERE'
+    openai_api_key = ''
     os.environ['TOKENIZERS_PARALLELISM'] = 'False'
     if openai_api_key:
         st.session_state['OPENAI_API_KEY'] = openai_api_key
