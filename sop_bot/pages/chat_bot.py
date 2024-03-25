@@ -27,10 +27,17 @@ class CustomDataChatbot:
     @utils.enable_chat_history
     def main(self):       
         logger.debug('in chat bot main')
-        # names = self.artifact.vectorDB.get_document_names()
-        # with st.sidebar.expander(label='List of documents', expanded=True):
-        #     for name, id in names.items():
-        #         st.checkbox(label=f'{name}', key=f'{id}')
+
+        names = self.artifact.vectorDB.get_document_names()
+        with st.sidebar.expander(label='List of documents', expanded=True):
+            # for name, id in names.items():
+            #     st.checkbox(label=f'{name}', key=f'{id}')
+            options = st.multiselect(label='Select Documents for Precise Context', options=names.keys())
+            if len(options) > 0:
+                self.artifact.update_qa_chain(self.artifact.vectorDB.db, options)  
+
+        # st.write('You selected:', options)
+
         
         user_query = st.chat_input(placeholder="Ask me anything!")
 
@@ -39,6 +46,7 @@ class CustomDataChatbot:
             utils.display_msg(user_query, 'user')
 
             with st.chat_message("assistant"):
+
                 with st.spinner("Fetching results"):
                     st_cb = StreamHandler(st.empty())
                     response = self.artifact.qa_chain({"question":user_query}, callbacks=[st_cb])   
@@ -49,6 +57,7 @@ class CustomDataChatbot:
                         else:  
                             st.text('')                 
                     st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+
                 
 
 if __name__ == "__main__":

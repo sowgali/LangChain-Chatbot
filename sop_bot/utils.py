@@ -22,7 +22,9 @@ def enable_chat_history(func):
 
         # to show chat history on ui
         if "messages" not in st.session_state:
-            st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+            st.session_state["messages"] = [
+                {"role": "assistant", "content": "How can I help you?"}
+            ]
         for msg in st.session_state["messages"]:
             st.chat_message(msg["role"]).write(msg["content"])
 
@@ -41,7 +43,7 @@ def display_msg(msg, author):
     st.chat_message(author).write(msg)
 
 def configure_openai_api_key():
-    openai_api_key = ''
+    openai_api_key = 'ENTER YOU OPEN AI KEY HERE'
     os.environ['TOKENIZERS_PARALLELISM'] = 'False'
     if openai_api_key:
         st.session_state['OPENAI_API_KEY'] = openai_api_key
