@@ -1,3 +1,5 @@
 [server]
 maxUploadSize = 15
 runOnSave = true
+[theme]
+base="dark"

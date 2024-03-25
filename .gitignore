@@ -11,6 +11,8 @@
 # cache
 .cache/
 __pycache__/
+.mypy_cache/
+
 
 test_chroma_db/
 tmp/
