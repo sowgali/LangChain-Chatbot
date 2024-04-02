@@ -46,10 +46,10 @@ class ChromaDB(VectorDB):
     def __init__(self, name, index_name='sop-chat'):
         self.name = name
         self.index_name = index_name
-        self.retriever = None  
-        client = chromadb.PersistentClient(path=name)  
+        self.retriever = None    
+        client = chromadb.PersistentClient(path=name)
         self.client = client
-        self.db = Chroma(client = client, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
+        self.db = Chroma(client = client, persist_directory=name, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
         
 
     def insert_vector(self, vector):
@@ -132,10 +132,10 @@ class ChromaDB(VectorDB):
         db_records = db.get()
         logger.debug(db_records['metadatas'])   
         names = {}
-        for i, record in enumerate(db_records):
-            names[db_records['metadatas'][i]['source'].replace('./tmp/', '')]= db_records['ids'][i]       
-        
-               
+        for i, record in enumerate(db_records['metadatas']):
+            names[record['source'].replace('./tmp/', '')]= record['page']    
+            
+              
         logger.debug(f"length of ids in db {len(db_records['ids'])}")
         return names
         
