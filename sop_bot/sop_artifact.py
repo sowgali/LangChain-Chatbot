@@ -4,6 +4,7 @@ import streamlit as st
 from streaming import StreamHandler
 from vector import InmemoryDB, ChromaDB
 import logging
+import json
 
 logger = logging.getLogger("sop_bot")
 logger.setLevel(level=logging.DEBUG)
@@ -123,25 +124,37 @@ class SopArtifactory:
     def update_qa_chain(self, vectordb, docs):
         logger.debug("setting up qa_chain")
         print("in updating qa chain")
+        jsonfile=[]
+        
+        for index, value in enumerate(docs):
+                      jsonfile.append(   {
+                        "source": {
+                            "$eq": "./tmp/"+docs[index]
+                        }},)
+        if len(docs) > 1:
+            jsondict = {
+                "k":2,
+                "fetch_k":4,
+                "filter": {"$or":jsonfile}
+            }
+        else:
+                 jsondict = {
+                "k":2,
+                "fetch_k":4,
+                "filter":  {
+                        "source": {
+                            "$eq": "./tmp/"+docs[0]
+                        }},
+                }
+        print('printing the selected document json \n')
+        
+        print (json.dumps(jsondict, indent=4))
 
-        # Define retriever
         retriever = vectordb.as_retriever(
             search_type="mmr",
-            search_kwargs={
-                "k": 2,
-                "fetch_k": 4,
-                "filter": {
-                    "$or": [
-                        {
-                            "source": {
-                                "$eq": "./tmp/Miss DeGeorge's First Grade General Information Packet 2023.pdf"
-                            }
-                        },
-                        {"source": {"$eq": "./tmp/SopBot.pdf"}},
-                    ]
-                },
-            },
+            search_kwargs=jsondict,
         )
+        
 
         memory = ConversationBufferMemory(
             memory_key="chat_history", return_messages=True, output_key="answer"
