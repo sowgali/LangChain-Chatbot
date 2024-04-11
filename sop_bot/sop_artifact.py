@@ -5,6 +5,7 @@ from streaming import StreamHandler
 from vector import InmemoryDB, ChromaDB
 import logging
 import json
+from aws_util import s3
 
 logger = logging.getLogger("sop_bot")
 logger.setLevel(level=logging.DEBUG)
@@ -22,7 +23,9 @@ from langchain.prompts import (
 )
 from langchain_core.messages import SystemMessage
 
-
+S3_PREFIX = "s3://"
+S3_URL_PREFIX="https://s3.amazonaws.com/"
+_S3_RESOURCE = "sop-ai-docs"
 class SopArtifactory:
 
     def __init__(self):
@@ -37,6 +40,8 @@ class SopArtifactory:
             os.makedirs(folder)
 
         file_path = f"./{folder}/{file.name}"
+        s3_file_path = f"{S3_PREFIX}{_S3_RESOURCE}/{file.name}"
+        
         if self.vectorDB.is_document_exist(file_path):
             logger.debug(
                 f"document {file.name} already exists in vector db, so deleting it and updating"
@@ -48,7 +53,13 @@ class SopArtifactory:
             )
         with open(file_path, "wb") as f:
             f.write(file.getvalue())
+
+        s3.copy_file_to_s3(file_path, s3_file_path)
         return file_path
+    
+    def get_s3_file(self, file_name:str, page_number):
+          s3_file_path = f"{S3_URL_PREFIX}{_S3_RESOURCE}/{file_name}#page={page_number}"
+          return s3_file_path
 
     def upload_files(self, uploaded_files):
         # Load documents

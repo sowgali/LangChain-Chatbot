@@ -32,8 +32,9 @@ class CustomDataChatbot:
         with st.sidebar.expander(label='List of documents', expanded=True):
             # for name, id in names.items():
             #     st.checkbox(label=f'{name}', key=f'{id}')
-            options = st.multiselect(label='Select Documents for Precise Context', options=names.keys())
+            options = st.multiselect(label='Select Documents for Precise Context', options=names)
             if len(options) > 0:
+                
                 self.artifact.update_qa_chain(self.artifact.vectorDB.db, options)  
 
         # st.write('You selected:', options)
@@ -53,7 +54,12 @@ class CustomDataChatbot:
                     with st.sidebar:
                         st.header('Source:')
                         if response['source_documents'] and response['source_documents'][0].metadata['source']:
-                            st.text(response['source_documents'][0].metadata['source'].split('/')[-1]) 
+                            file_name = response['source_documents'][0].metadata['source'].split('/')[-1]
+                            page_num = list(response['source_documents'][0])[1][1]['page']
+                            url=self.artifact.get_s3_file(file_name=file_name, page_number=page_num)                           
+                            st.text(file_name) 
+                            #st.text(list(response['source_documents'][0])[1][1]['page'])
+                            st.link_button("Go to file", url)
                         else:  
                             st.text('')                 
                     st.session_state.messages.append({"role": "assistant", "content": response['answer']})
