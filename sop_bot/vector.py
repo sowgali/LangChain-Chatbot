@@ -132,12 +132,15 @@ class ChromaDB(VectorDB):
         db_records = db.get()
         logger.debug(db_records['metadatas'])   
         names = {}
+        file_names = set()
+        
         for i, record in enumerate(db_records['metadatas']):
-            names[record['source'].replace('./tmp/', '')]= record['page']    
+            file_names.add(record['source'].replace('./tmp/', ''))
+            #names[record['source'].replace('./tmp/', '')]= record['page']    
             
               
         logger.debug(f"length of ids in db {len(db_records['ids'])}")
-        return names
+        return file_names
         
     
     def is_document_exist(self, document_name, persist_directory=None):    
