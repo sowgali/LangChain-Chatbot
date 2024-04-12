@@ -55,7 +55,7 @@ class CustomDataChatbot:
                         st.header('Source:')
                         if response['source_documents'] and response['source_documents'][0].metadata['source']:
                             file_name = response['source_documents'][0].metadata['source'].split('/')[-1]
-                            page_num = list(response['source_documents'][0])[1][1]['page']
+                            page_num = int(list(response['source_documents'][0])[1][1]['page']) + 1
                             url=self.artifact.get_s3_file(file_name=file_name, page_number=page_num)                           
                             st.text(file_name) 
                             #st.text(list(response['source_documents'][0])[1][1]['page'])
