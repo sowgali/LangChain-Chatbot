@@ -46,7 +46,7 @@ def _parse_s3_path(path: str) -> Tuple[str, str]:
 def copy_file_to_s3(local_full_path: str, remote_full_path: str) -> bool:
     bucket_name, s3_file_name = _parse_s3_path(remote_full_path)
     logger.debug("Uploading {} to {}:{}".format(local_full_path, bucket_name, s3_file_name))
-    get_client().upload_file(local_full_path, bucket_name, s3_file_name)
+    get_client().upload_file(local_full_path, bucket_name, s3_file_name, ExtraArgs={'ACL': 'public-read', 'ContentDisposition': 'inline', 'ContentType': ''})
     logger.debug("Done")
     return True
 
