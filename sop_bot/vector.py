@@ -3,54 +3,62 @@ from langchain.vectorstores import DocArrayInMemorySearch
 from langchain_pinecone import Pinecone as PineconeStore
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
+from chromadb import Embeddings
 
 import utils
 import os
 import chromadb
 import logging
-logger = logging.getLogger('sop_bot')
+
+logger = logging.getLogger("sop_bot")
 
 SCRIPT_PATH: str = os.path.dirname(os.path.abspath(__file__))
 
 
 class VectorDB:
-    def __init__(self, name, index_name='sop-chat'):
+    def __init__(self, name, index_name="vu-chat"):
         self.name = name
         self.index_name = index_name
-        self.retriever = None  
+        self.retriever = None
 
     def insert_vector(self, vector):
         raise NotImplementedError("Subclasses must implement insert_vector method")
 
     def query_vector(self, vector):
         raise NotImplementedError("Subclasses must implement query_vector method")
-    
+
     @abstractmethod
     def from_documents(self, splits, embeddings):
         pass
+
     @abstractmethod
-    def get_documents(self, persist_directory= None):
+    def get_documents(self, persist_directory=None):
         pass
+
     @abstractmethod
-    def is_document_exist(self, document_name, persist_directory=None):    
+    def is_document_exist(self, document_name, persist_directory=None):
         pass
+
     @abstractmethod
-    def delete_document(self, document_name, persist_directory=None):    
+    def delete_document(self, document_name, persist_directory=None):
         pass
-        
+
     def load_documents(self, ids, splits, embeddings, persist_directory):
         pass
 
 
 class ChromaDB(VectorDB):
-    def __init__(self, name, index_name='sop-chat'):
+    def __init__(self, name, index_name="vu-chat"):
         self.name = name
         self.index_name = index_name
-        self.retriever = None    
+        self.retriever = None
         client = chromadb.PersistentClient(path=name)
         self.client = client
-        self.db = Chroma(client = client, persist_directory=name, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
-        
+        self.db = Chroma(
+            client=client,
+            persist_directory=name,
+            embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
+        )
 
     def insert_vector(self, vector):
         # Implementation specific to Chromed
@@ -59,155 +67,188 @@ class ChromaDB(VectorDB):
     def query_vector(self, vector):
         # Implementation specific to Chromed
         logger.debug("Querying vector from Chromed:", vector)
-        
-    def from_documents(self, splits, embeddings):  
-        logger.debug(f'in from_documents with persisten dir : {self.name}')      
-        chroma_db = Chroma.from_documents(documents=splits, embedding = embeddings, persist_directory=self.name, client=self.client)
+
+    def from_documents(self, splits, embeddings):
+        logger.debug(f"in from_documents with persisten dir : {self.name}")
+        chroma_db = Chroma.from_documents(
+            documents=splits,
+            embedding=embeddings,
+            persist_directory=self.name,
+            client=self.client,
+        )
         chroma_db.persist()
         self.db = chroma_db
         retriever = chroma_db.as_retriever(
-            search_type='mmr',
-            search_kwargs={'k':2, 'fetch_k':4}
+            search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4}
         )
-        return chroma_db    
-    
-    def get_retreiver(self,  embeddings):
+        return chroma_db
+
+    def get_retreiver(self, embeddings):
         self.client = chromadb.PersistentClient()
-        chroma_db = Chroma(embedding = embeddings, persist_directory=self.name, client=self.client, collection='sop_chat')
+        chroma_db = Chroma(
+            embedding=embeddings,
+            persist_directory=self.name,
+            client=self.client,
+            collection="sop_chat",
+        )
         chroma_db.persist()
         retriever = chroma_db.as_retriever(
-            search_type='mmr',
-            search_kwargs={'k':2, 'fetch_k':4}
+            search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4}
         )
-        return retriever    
-    
-    def get_documents(self, sources, persist_directory= None):
+        return retriever
+
+    def get_documents(self, sources, persist_directory=None):
         if persist_directory is None:
             persist_directory = self.name
-        logger.debug(f'in get_documents with persisten dir : {persist_directory}')
-        document_name =   "./tmp/PadmaAwardees2024.pdf"  
-        source_string =  "{0}".format(document_name)  
+        logger.debug(f"in get_documents with persisten dir : {persist_directory}")
+        document_name = "./tmp/PadmaAwardees2024.pdf"
+        source_string = "{0}".format(document_name)
         logger.debug(source_string)
         if self.db is None:
             self.db = Chroma(persist_directory=persist_directory)
         db = self.db
-        db_records = db.get(where={"source":document_name})
-        #db_records = Chroma(persist_directory='chroma_db').get(where={"source": "./tmp/PadmaAwardees2024.pdf"})
-        logger.debug(db_records['metadatas'])          
-        
+        db_records = db.get(where={"source": document_name})
+        # db_records = Chroma(persist_directory='chroma_db').get(where={"source": "./tmp/PadmaAwardees2024.pdf"})
+        logger.debug(db_records["metadatas"])
+
         logger.debug(f"length of ids in db {len(db_records['ids'])}")
-        
-    def get_document_ids_by_sources(self, sources= None, persist_directory= None):
+
+    def get_document_ids_by_sources(self, sources=None, persist_directory=None):
         if persist_directory is None:
             persist_directory = self.name
-        logger.debug(f'in get_documents with persisten dir : {persist_directory}')
+        logger.debug(f"in get_documents with persisten dir : {persist_directory}")
         if self.db is None:
             self.db = Chroma(persist_directory=persist_directory)
         db = self.db
         ids = []
         if sources is None:
             db_records = db.get()
-            ids.append(db_records['ids'])
+            ids.append(db_records["ids"])
         else:
             for source in sources:
-                source_string =  "./tmp/{0}".format(source)
+                source_string = "./tmp/{0}".format(source)
                 logger.debug(source_string)
-            
-                db_records = db.get(where={"source":source_string})
-                ids.append(db_records['ids'])
-            
-                logger.debug(db_records['metadatas'])          
-            
+
+                db_records = db.get(where={"source": source_string})
+                ids.append(db_records["ids"])
+
+                logger.debug(db_records["metadatas"])
+
                 logger.debug(f"length of ids in db {len(db_records['ids'])}")
         return ids
-        
-    def get_document_names(self, persist_directory= None):
+
+    def get_document_names(self, persist_directory=None):
         if persist_directory is None:
             persist_directory = self.name
-        logger.debug(f'in get_documents with persisten dir : {persist_directory}')       
-        
+        print(
+            f"in get_document_names with persisten dir : {persist_directory} collection {self.index_name}"
+        )
+
         if self.db is None:
             self.db = Chroma(persist_directory=persist_directory)
         db = self.db
-        db_records = db.get()
-        logger.debug(db_records['metadatas'])   
-        names = {}
         file_names = set()
-        
-        for i, record in enumerate(db_records['metadatas']):
-            file_names.add(record['source'].replace('./tmp/', ''))
-            #names[record['source'].replace('./tmp/', '')]= record['page']    
-            
-              
-        logger.debug(f"length of ids in db {len(db_records['ids'])}")
+        try:
+            col = self.client.get_collection(self.index_name)
+            if col is None:
+                print("collection not found")
+            else:
+                print("collection found")
+            db_records = col.get(include=["documents", "metadatas"], limit=5)
+            print(f"total documents available in collection : {(db_records)}")
+            names = {}
+            file_names = set()
+
+            # for i, record in enumerate(db_records["metadatas"]):
+            #     file_names.add(record["source"].replace("./tmp/", ""))
+            #     # names[record['source'].replace('./tmp/', '')]= record['page']
+
+            # print(f"length of ids in db {len(db_records['ids'])}")
+        except Exception as e:
+            print(f"error in getting collection{e}")
+
         return file_names
-        
-    
-    def is_document_exist(self, document_name, persist_directory=None):    
+
+    def is_document_exist(self, document_name, persist_directory=None):
         if persist_directory is None:
             persist_directory = self.name
-        logger.debug(f'in is_document_exist with persisten dir : {persist_directory}')
-        source_string =  "{0}".format(document_name) 
-        logger.debug(f'source string verifying is {source_string}') 
+        logger.debug(f"in is_document_exist with persisten dir : {persist_directory}")
+        source_string = "{0}".format(document_name)
+        logger.debug(f"source string verifying is {source_string}")
         if self.db is None:
-                self.db = Chroma(persist_directory=persist_directory)
+            self.db = Chroma(persist_directory=persist_directory)
         db = self.db
-        db_records = db.get(where={"source":document_name})
-        logger.debug(db_records['metadatas'])  
+        db_records = db.get(where={"source": document_name})
+        logger.debug(db_records["metadatas"])
         logger.debug(f"db ids returned are {db_records['ids']}")
-        if len(db_records['ids']) > 0:
+        if len(db_records["ids"]) > 0:
             return True
-        
+
         return False
-        
-        
-    
-    def delete_document(self, document_name, persist_directory=None):    
+
+    def delete_document(self, document_name, persist_directory=None):
         if persist_directory is None:
             persist_directory = self.name
-        logger.debug(f'in delete_document with persisten dir : {persist_directory}')
-        source_string =  "{0}".format(document_name) 
+        logger.debug(f"in delete_document with persisten dir : {persist_directory}")
+        source_string = "{0}".format(document_name)
         db = Chroma(persist_directory=persist_directory)
         if self.db is None:
             self.db = Chroma(persist_directory=persist_directory)
         db = self.db
-        db_records = db.get(where={"source":document_name})
-        logger.debug(db_records['metadatas'])  
-        
+        db_records = db.get(where={"source": document_name})
+        logger.debug(db_records["metadatas"])
+
         ids_to_del = []
-        logger.debug(f"total records in the collection for the source {document_name} are {len(db_records['ids'])}")
-        for idx in range(len(db_records['ids'])):
+        logger.debug(
+            f"total records in the collection for the source {document_name} are {len(db_records['ids'])}"
+        )
+        for idx in range(len(db_records["ids"])):
 
-            id = db_records['ids'][idx]
-            metadata = db_records['metadatas'][idx]
+            id = db_records["ids"][idx]
+            metadata = db_records["metadatas"][idx]
 
-            if metadata['source'] == document_name:
+            if metadata["source"] == document_name:
                 ids_to_del.append(id)
         logger.debug(len(ids_to_del))
         db._collection.delete(ids_to_del)
         db_records = Chroma(persist_directory=persist_directory).get(source_string)
-        logger.debug(f"total records in the collection after deletion for the source {document_name} are {len(db_records['ids'])}")
-        
+        logger.debug(
+            f"total records in the collection after deletion for the source {document_name} are {len(db_records['ids'])}"
+        )
+
     def load_documents(self, ids, splits, embeddings, persist_directory):
         client = chromadb.PersistentClient(persist_directory)
         collection = client.get_or_create_collection(self.index_name)
         for id in ids:
-            logger.debug(id, end='\n')
+            logger.debug(id, end="\n")
         for doc in splits:
-            logger.debug(doc, end='\n')
+            logger.debug(doc, end="\n")
         logger.debug(f"ids length: {len(ids)} and docs count is : {len(splits)}")
-        collection.add(ids=ids, documents=splits,embeddings=embeddings)
+        collection.add(ids=ids, documents=splits, embeddings=embeddings)
         return collection
-        
-        
+
+    def store_to_vectordb(self, chunks):
+        """Store chunks to the ChromaDB."""
+        if self.client is None:
+            client = chromadb.PersistentClient(path=self.name)
+        else:
+            client = self.client
+        collection = client.get_or_create_collection(name=self.index_name)
+        for idx, chunk in enumerate(chunks):
+            collection.add(ids=[f"doc_{idx}"], documents=[chunk])
+        print(
+            f"Stored {len(chunks)} chunks to ChromaDB {self.name} in colleccion {self.index_name}"
+        )
+        self.db.persist()
+        return self.db
 
 
 class Pinecone(VectorDB):
-    def __init__(self, name, index_name='sop-chat'):
+    def __init__(self, name, index_name="sop-chat"):
         self.name = name
         self.index_name = index_name
         self.pinecone_store = utils.configure_pinecone()
-        self.retriever = None  
+        self.retriever = None
 
     def insert_vector(self, vector):
         # Implementation specific to Pinecone
@@ -216,20 +257,26 @@ class Pinecone(VectorDB):
     def query_vector(self, vector):
         # Implementation specific to Pinecone
         logger.debug("Querying vector from Pinecone:", vector)
-        
+
     def from_documents(self, splits, embeddings):
-        docsearch = self.pinecone_store.from_documents(splits, embeddings, index_name=self.index_name)
+        docsearch = self.pinecone_store.from_documents(
+            splits, embeddings, index_name=self.index_name
+        )
         retriever = PineconeHybridSearchRetriever(
-                    embeddings=embed, sparse_encoder=bm25, index=index, top_k= int(5), alpha= float(0.7))
-        return docsearch    
-    
+            embeddings=embed,
+            sparse_encoder=bm25,
+            index=index,
+            top_k=int(5),
+            alpha=float(0.7),
+        )
+        return docsearch
 
 
 class InmemoryDB(VectorDB):
-    def __init__(self, name, index_name='sop-chat'):
+    def __init__(self, name, index_name="sop-chat"):
         self.name = name
         self.index_name = index_name
-        self.retriever = None  
+        self.retriever = None
 
     def insert_vector(self, vector):
         # Implementation specific to Pinecone
@@ -238,8 +285,6 @@ class InmemoryDB(VectorDB):
     def query_vector(self, vector):
         # Implementation specific to Pinecone
         logger.debug("Querying vector from Pinecone:", vector)
-        
+
     def from_documents(self, splits, embeddings):
         return DocArrayInMemorySearch.from_documents(splits, embeddings)
-
-    

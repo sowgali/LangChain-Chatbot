@@ -5,6 +5,9 @@ A chatbot for aiding in clinical SOPs
 How to run in local
 Add your open AI apikey to utils.py ( will update to aws ssm later)
 ```sh
+python3 -m venv vugenai
+source vugenai/bin/activate
+
 pip install -r requirements.txt
 streamlit run sop_bot/main.py
 ```
